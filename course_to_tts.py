@@ -127,7 +127,8 @@ def fetch_div_content(url: str) -> Tuple[str, str]:
 
 def generate_tts_script(main_content: str, speaker_notes: str, api_key: str) -> str:
     """
-    Generates a TTS script from the course content and speaker notes using the OpenAI API.
+    Generates a concise, engaging TTS script from Rust mdBook course content,
+    leveraging OpenAI's API and focusing on key concepts and examples.
 
     Args:
         main_content: The main course content.
@@ -140,18 +141,22 @@ def generate_tts_script(main_content: str, speaker_notes: str, api_key: str) -> 
     Raises:
         Exception: If the OpenAI API call fails.
     """
-    logger.info("Generating TTS script using OpenAI API...")
+    logger.info("Generating optimized TTS script using OpenAI API...")
     client = OpenAI(api_key=api_key)
 
     prompt = (
-        "You are an assistant that converts course material into a text-to-speech script. "
-        "The script should contain only the text to be read aloud, with no extra annotations, "
-        "formatting markers, or symbols.  Here is the course content and speaker notes:\n\n"
-        "Course Content:\n"
+        "You are a Rust programming expert tasked with converting content from a Rust course into a concise and engaging "
+        "text-to-speech script.  Assume the listener is learning Rust. Focus on explaining the core Rust concepts and "
+        "providing illustrative Rust code examples. The examples should be described in plain English, explaining *what* the code does, rather than presenting the raw code. "
+        "Omit any meta-discussions, instructions to the presenter (like 'show what happens'), "
+        "or compiler error discussions. The script should only include the text to be read aloud, "
+        "without extra annotations, formatting markers, or symbols. "
+        "Prioritize clarity and brevity. Extract the most important information and present it in a way that's easy to understand when spoken.\n\n"
+        "Course Content (from a Rust mdBook):\n"
         f"{main_content}\n\n"
         "Speaker Notes:\n"
-        f"{speaker_notes if speaker_notes else 'None'}\n\n"  # Handle case with no notes
-        "Provide only the final TTS script as plain text."
+        f"{speaker_notes if speaker_notes else 'None'}\n\n"
+        "Provide ONLY the final TTS script as plain text, suitable for direct text-to-speech conversion."
     )
 
     try:
@@ -159,19 +164,24 @@ def generate_tts_script(main_content: str, speaker_notes: str, api_key: str) -> 
             messages=[
                 {
                     "role": "system",
-                    "content": "Generate a clear and engaging TTS script containing only the text to be read aloud.",
+                    "content": (
+                        "You are a Rust programming expert. Generate a clear, concise, and engaging TTS script for a Rust course. "
+                        "Focus on key Rust concepts and examples, explaining the *behavior* of code examples in plain English. "
+                        "Omit presenter instructions, error discussions, and unnecessary details. Assume the listener is a Rust learner."
+                    ),
                 },
                 {"role": "user", "content": prompt},
             ],
-            model="gpt-4o",  # Or any other suitable model. Consider "gpt-3.5-turbo" for cost savings.
-            temperature=0.7,
-            max_tokens=1500,  # Adjust as needed.
+            model="gpt-4o-mini",
+            temperature=0.5,
+            max_tokens=1000,
+            top_p=0.9,
         )
         tts_script = response.choices[0].message.content.strip()
-        logger.info("TTS script generated successfully.")
+        logger.info("Optimized TTS script generated successfully.")
     except Exception as e:
         logger.error(f"OpenAI API call failed: {e}")
-        raise  # Re-raise for caller to handle
+        raise
 
     return tts_script
 
